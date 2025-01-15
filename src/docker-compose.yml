@@ -36,8 +36,8 @@ services:
   server:
     container_name: server
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: ./server/
+      dockerfile: DataProvider/DataProvider.API/Dockerfile
     # Или:
     # image: your-registry/server:latest
     depends_on:
