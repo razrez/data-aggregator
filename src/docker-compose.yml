@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  infinispan:
+    container_name: infinispan
+    image: jboss/infinispan-server:latest
+    environment:
+      # Пример настроек, замените на свои реальные данные
+      - USER=infinispan
+      - PASS=secret
+      # Или используйте переменные окружения вида:
+      # USER=${INFINISPAN_USER:-infinispan}
+      # PASS=${INFINISPAN_PASS:-secret}
+    ports:
+      - "11222:11222"
+    # volume или другие настройки, если нужны
+    # volumes:
+    #   - ./infinispan_data:/opt/infinispan/server/data
+
+  data-scrapper:
+    container_name: data-scrapper
+    build:
+      context: ./data-scrapper
+      dockerfile: Dockerfile
+    # Если вы используете уже готовый образ из Registry, можно так:
+    # image: your-registry/data-scrapper:latest
+    depends_on:
+      - infinispan
+    environment:
+      - INFINISPAN_HOST=infinispan
+      - INFINISPAN_PORT=11222
+      - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
+      - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+    # Можно добавить volume для кода/логов/настроек
+
+  server:
+    container_name: server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    # Или:
+    # image: your-registry/server:latest
+    depends_on:
+      - infinispan
+    environment:
+      - INFINISPAN_HOST=infinispan
+      - INFINISPAN_PORT=11222
+      - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
+      - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+      # Другие нужные переменные окружения для ASP.NET
+    ports:
+      - "8080:80"
+    # volumes:
+    #   - ./server_logs:/app/logs
+
+  ui:
+    container_name: ui
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    # Или:
+    # image: your-registry/ui:latest
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+    # Если нужен env для API:
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+      # или VUE_APP_API_URL, если проект на Vue
+    # volumes:
+    #   - ./ui_logs:/usr/src/app/logs
