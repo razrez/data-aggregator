@@ -30,6 +30,11 @@ services:
       - INFINISPAN_CACHE_NAME=cache-name
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+
+      # - VK_ACCESS_TOKEN=
+      # - VK_API_VERSION=5.199
+      # - POSTS_COUNT=100
+      # - POSTS_OFFSET=100
     # Можно добавить volume для кода/логов/настроек
 
   server:
