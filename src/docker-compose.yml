@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   infinispan:
     container_name: infinispan
@@ -29,6 +27,7 @@ services:
     environment:
       - INFINISPAN_HOST=infinispan
       - INFINISPAN_PORT=11222
+      - INFINISPAN_CACHE_NAME=cache-name
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
     # Можно добавить volume для кода/логов/настроек
