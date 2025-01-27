@@ -67,3 +67,36 @@ Service which collects posts from VK (using VK API), caches recent data with Inf
     - Infinispan по порту 11222.
     - server по адресу http://localhost:8080 (Web API).
     - ui по адресу http://localhost:3000 (React/Vue-приложение).
+
+___
+
+# Тестирование эндпоинтов
+
+Ниже приведены примеры HTTP-запросов (в формате `curl`) для проверки основных методов **Minimal API**.
+
+1. *Получить один пост по ключу*
+
+```bash
+curl -X GET "http://localhost:8080/posts/1466831" 
+```
+* 1466831 – пример ключа, который был сохранён в Infinispan (смотри логи Python-сервиса).
+* Порт (8080) и маршрут (/posts) могут отличаться в зависимости от конфигурации.
+
+2. *Получить последние N постов*
+```bash
+curl -X GET "http://localhost:8080/posts?limit=5"
+```
+* Параметр limit указывает, сколько постов отдать (сортировка по дате убывания).
+
+3. *Получить статистику по хэштегам за период*
+```bash
+curl -X GET "http://localhost:8080/analytics?startDate=2025-01-20&endDate=2025-01-27"
+```
+* Параметры startDate и endDate указывают даты начала и конца периода (в формате YYYY-MM-DD).
+* В ответе придёт JSON c подсчётом встреченных хэштегов (например, #vk, #books и т. д.).
+
+4. *Swagger (опционально)*
+Если приложение запущено в Development режиме, откройте в браузере и тестируйте эндпоинты через веб-интерфейс:
+```bash
+http://localhost:8080/swagger
+```
