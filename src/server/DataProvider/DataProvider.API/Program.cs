@@ -1,50 +1,42 @@
+using DataProvider.API.Endpoints;
+using DataProvider.API.Models;
+using DataProvider.API.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
+// 1) Конфигурируем и считываем InfinispanSettings
 builder.Services.Configure<InfinispanSettings>(builder.Configuration.GetSection("InfinispanSettings"));
+
+// 2) Регистрируем HttpClient (Singleton)
+builder.Services.AddSingleton<HttpClient>();
+
+// 3) Регистрируем наш сервис InfinispanService в DI
+builder.Services.AddSingleton<IInfinispanService>(provider =>
+{
+  var httpClient = provider.GetRequiredService<HttpClient>();
+  var infinispanSettings = provider
+    .GetRequiredService<IConfiguration>()
+    .GetSection("InfinispanSettings")
+    .Get<InfinispanSettings>() ?? new InfinispanSettings();
+
+  return new InfinispanService(httpClient, infinispanSettings);
+});
+
+// 4) Swagger для тестирования
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Получение настроек Infinispan
-var infinispanSettings = app.Services.GetRequiredService<IConfiguration>().GetSection("InfinispanSettings").Get<InfinispanSettings>();
-
-HttpClient httpClient = new HttpClient();
-httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{infinispanSettings.User}:{infinispanSettings.Password}")));
-
-app.MapGet("/get/{key}", async (string key) =>
+// Подключаем Swagger
+if (app.Environment.IsDevelopment())
 {
-    var response = await httpClient.GetAsync($"{infinispanSettings.Url}/rest/v2/caches/cache-name/{key}");
-    if (response.IsSuccessStatusCode)
-    {
-        var value = await response.Content.ReadAsStringAsync();
-        return Results.Ok(new { Key = key, Value = value });
-    }
-    else
-    {
-        return Results.NotFound();
-    }
-});
+  app.UseSwagger();
+  app.UseSwaggerUI();
+}
 
-app.MapGet("/list", async (int offset = 0, int limit = 10) =>
-{
-    var response =
-        await httpClient.GetAsync($"{infinispanSettings.Url}/rest/v2/caches/cache-name?max={limit}&start={offset}");
-    if (response.IsSuccessStatusCode)
-    {
-        var values = await response.Content.ReadFromJsonAsync<List<string>>();
-        return Results.Ok(values);
-    }
-    else
-    {
-        return Results.NotFound();
-    }
-});
+// 5) Маппим наши эндпоинты
+app.MapPostEndpoints();
+app.MapAnalyticsEndpoints();
 
 app.Run();
-
-// Модель для настроек Infinispan
-public class InfinispanSettings
-{
-    public string Url { get; set; }
-    public string User { get; set; }
-    public string Password { get; set; }
-}
