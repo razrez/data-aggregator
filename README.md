@@ -1,5 +1,5 @@
 # data-aggregator
-Service which collects posts from VK (using VK API), caches recent data with InfiniSpam, provides analytical insights  
+Service which collects posts from VK (using VK API), caches recent data with InfiniSpan, provides analytical insights  
 
 ## Общая информация
 
