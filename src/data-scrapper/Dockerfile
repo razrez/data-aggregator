@@ -1,22 +1,21 @@
-# Используем "slim" версию образа Python для меньшего размера
-FROM python:3.9-slim
+FROM python:3.10
 
-# Отключаем создание .pyc-файлов и буферизацию вывода
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/usr/bin/python3
 
-# Создаём рабочую директорию в контейнере
+RUN apt-get update && apt-get install -y cron && apt-get install -y python3-pip
+
 WORKDIR /app
 
-# Сначала копируем requirements.txt,
-# чтобы Docker кешировал установку зависимостей
-COPY requirements.txt /app/
+COPY cronjob /etc/cron.d/crontab
 
-# Устанавливаем зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+RUN chmod 0644 /etc/cron.d/crontab
 
-# Копируем оставшиеся файлы скрипта
+RUN crontab /etc/cron.d/crontab
+
 COPY . /app
 
-# Запускаем основной Python-скрипт (например, main.py)
-CMD ["python", "main.py"]
+RUN /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages -r requirements.txt
+
+CMD ["/bin/bash", "-c", "printenv > /etc/environment && cron -f"]

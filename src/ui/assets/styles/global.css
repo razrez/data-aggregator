@@ -1,0 +1,75 @@
+.el-form-item__label {
+    color: #000000 !important;
+    font-weight: bold;
+    font-size: 16px !important;
+}
+
+.el-form-item__label.is-required::before {
+    content: '*';
+    color: red;
+    margin-right: 4px;
+}
+
+.el-input {
+    border-radius: 12px  !important;
+}
+
+.el-input__inner {
+    background-color: #f0f2f5;
+    border-color: #dcdfe6;
+    color: #606266;
+    font-size: 14px;
+    padding: 10px;
+
+    &:focus {
+        border-color: #409eff;
+        box-shadow: 0 0 3px rgba(64, 158, 255, 0.5);
+    }
+}
+
+/* Кастомизация стилей для <el-button> */
+.el-button {
+    background-color: #0077FF !important;
+    border-color: #0077FF !important;
+    color: white;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    padding: 10px 20px;
+    border-radius: 12px !important;
+
+    &:hover {
+        background-color: #1680ff !important;
+        border-color: #1680ff !important;
+    }
+
+    &:active {
+        background-color: #1680ff !important;
+        border-color: #1680ff !important
+    }
+
+    &.el-button--primary {
+        background-color: #1680ff !important;
+        border-color: #1680ff !important;
+
+        &:hover {
+            background-color: #1680ff !important;
+            border-color: #1680ff !important;
+        }
+
+        &:active {
+            background-color: #1680ff !important;
+            border-color: #1680ff !important;
+        }
+    }
+}
+
+.el-form-item__label {
+    display: block !important;
+    text-align: left !important;
+    width: 100% !important;
+    padding: 0 0 0 10px !important;
+}
+
+.el-form-item__content {
+    margin-left: 0 !important;
+}
