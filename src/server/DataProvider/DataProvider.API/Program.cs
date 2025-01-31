@@ -1,30 +1,46 @@
 using DataProvider.API.Endpoints;
 using DataProvider.API.Models;
 using DataProvider.API.Services;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json.Serialization.Metadata;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) Конфигурируем и считываем InfinispanSettings
-builder.Services.Configure<InfinispanSettings>(builder.Configuration.GetSection("InfinispanSettings"));
+// Конфигурируем InfinispanSettings
+builder.Services
+  .Configure<InfinispanSettings>(builder.Configuration.GetSection("InfinispanSettings"))
+  .Configure<JsonOptions>(options =>
+  {
+    options.SerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+  });
 
-// 2) Регистрируем HttpClient (Singleton)
-builder.Services.AddSingleton<HttpClient>();
+builder.Services
+  .AddHttpClient<IInfinispanService, InfinispanService>()
+  .ConfigureHttpClient((provider, client) =>
+  {
+    // Берём настройки из IOptions<InfinispanSettings>
+    var options = provider.GetRequiredService<IOptions<InfinispanSettings>>();
+    var settings = options.Value;
 
-// 3) Регистрируем наш сервис InfinispanService в DI
-builder.Services.AddSingleton<IInfinispanService>(provider =>
-{
-  var httpClient = provider.GetRequiredService<HttpClient>();
-  var infinispanSettings = provider
-    .GetRequiredService<IConfiguration>()
-    .GetSection("InfinispanSettings")
-    .Get<InfinispanSettings>() ?? new InfinispanSettings();
+    var token = Convert.ToBase64String(
+      Encoding.UTF8.GetBytes($"{settings.User}:{settings.Password}")
+    );
+    client.DefaultRequestHeaders.Authorization =
+      new AuthenticationHeaderValue("Basic", token);
 
-  return new InfinispanService(httpClient, infinispanSettings);
-});
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(
+      new MediaTypeWithQualityHeaderValue("application/json")
+    );
+  });
 
-// 4) Swagger для тестирования
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Swagger для тестирования
+builder.Services
+  .AddEndpointsApiExplorer()
+  .AddSwaggerGen();
 
 var app = builder.Build();
 

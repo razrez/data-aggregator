@@ -13,11 +13,10 @@ public static class PostEndpoints
     // 1) Получить пост по ключу
     routes.MapGet("/api/post/get/{key}", async (string key, IInfinispanService infinispan) =>
     {
-      var post = await infinispan.GetPostByKey(key);
-      return post is not null ? Results.Ok(post) : Results.NotFound();
+      Post? post = await infinispan.GetPostByKey(key);
+      return TypedResults.Json(post);
     })
     .WithName("GetPostByKey");
-    //.WithOpenApi(); // только если используете Swashbuckle/Swagger
 
     // 2) Список последних N постов (сортировка по убыванию даты)
     routes.MapGet("/api/post/list", async (int limit, IInfinispanService infinispan) =>
@@ -34,13 +33,12 @@ public static class PostEndpoints
 
       // Сортируем по убыванию даты и берем limit
       posts = posts
-          .OrderByDescending(p => p.Date)
-          .Take(limit > 0 ? limit : 10)  // если limit не задан, возьмём 10
-          .ToList();
+        .OrderByDescending(p => p.Date)
+        .Take(limit > 0 ? limit : 10)  // если limit не задан, возьмём 10
+        .ToList();
 
       return TypedResults.Ok(posts);
     })
     .WithName("GetLastPosts");
-    //.WithOpenApi();
   }
 }

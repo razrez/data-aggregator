@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using DataProvider.API.Models.Converters;
+using System.Text.Json.Serialization;
 
 namespace DataProvider.API.Models;
 
@@ -7,7 +8,7 @@ public class Post
   [JsonPropertyName("id")]
   public int Id { get; set; }
 
-  // В Python-сервисе хранится как UnixTime, здесь – DateTime
+  [JsonConverter(typeof(UnixTimeToUniversalTimeConverter))]
   public DateTime Date { get; set; }
 
   [JsonPropertyName("text")]
