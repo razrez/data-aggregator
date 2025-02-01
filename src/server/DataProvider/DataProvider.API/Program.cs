@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json.Serialization.Metadata;
+using DataProvider.API.Startup;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +42,44 @@ builder.Services
 // Swagger для тестирования
 builder.Services
   .AddEndpointsApiExplorer()
-  .AddSwaggerGen();
+  .AddSwaggerGen(options =>
+  {
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+      Description = "JWT Authorization header using the Bearer scheme.",
+      Name = "Authorization",
+      In = ParameterLocation.Header,
+      Type = SecuritySchemeType.ApiKey,
+      Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+      {
+        new OpenApiSecurityScheme
+        {
+          Reference = new OpenApiReference
+          {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+          }
+        },
+        new string[] {}
+      }
+    });
+  });
+
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("CorsPolicy", builder =>
+  {
+    builder.AllowAnyOrigin()
+      .AllowAnyHeader()
+      .AllowAnyMethod();
+  });
+});
+
+builder.Services.AddAuth(builder.Configuration);
 
 var app = builder.Build();
 
@@ -51,8 +90,13 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
+app.UseAuth();
+
 // 5) Маппим наши эндпоинты
 app.MapPostEndpoints();
 app.MapAnalyticsEndpoints();
+app.MapAuthEndpoints();
+
+app.UseCors("CorsPolicy");
 
 app.Run();
