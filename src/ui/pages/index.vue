@@ -1,207 +1,153 @@
 <template>
-  <div>
-    <div class="title">Posts</div>
+  <div ref="scrollContainer" class="scroll-container">
     <el-row :gutter="20">
       <el-col :span="24" v-for="post in posts" :key="post.id" style="margin-bottom: 20px;">
-        <el-card class="post-card">
-          <div slot="header" class="clearfix">
-            <div class="group-name">{{ post.authorName }}</div>
-          </div>
-          <p>{{ post.text.slice(0, 100) }}...</p>
-          <div class="post-stats">
-            <el-tooltip content="Likes" placement="top">
-              <div>
-                <el-icon><ElementPlus /></el-icon> {{ post.likes }}
-              </div>
-            </el-tooltip>
-            <el-tooltip content="Commnets" placement="top">
-              <div>
-                <el-icon><ChatDotSquare /></el-icon> {{ post.comments }}
-              </div>
-            </el-tooltip>
-            <el-tooltip content="Share" placement="top">
-              <div>
-                <el-icon><Promotion /></el-icon> {{ post.reposts }}
-              </div>
-            </el-tooltip>
+        <el-card v-for="post in posts" :key="post.id" class="post-card">
+          <h2>{{ post.groupName }}</h2>
+          <p>{{ post.text }}</p>
+          <div class="post-footer">
+            <div class="post-actions">
+              <span><el-icon><ElementPlus /></el-icon> {{ post.likes }}</span>
+              <span><el-icon><ChatDotSquare /></el-icon> {{ post.views }}</span>
+            </div>
+            <div class="post-date">{{ formatDate(post.date) }}</div>
           </div>
         </el-card>
       </el-col>
     </el-row>
-    <el-pagination
-        layout="prev, pager, next"
-        :total="totalPosts"
-        :current-page="currentPage"
-        :page-size="pageSize"
-        @current-change="handlePageChange"
-    ></el-pagination>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
-import axios from 'axios';
-import {ChatDotSquare, Comment, ElementPlus, Promotion} from "@element-plus/icons-vue";
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import { ElCard } from 'element-plus';
+import {httpGet} from "~/utils/api";
 
 interface Post {
   id: number;
-  authorName: string;
+  groupName: string;
   text: string;
   likes: number;
-  comments: number;
-  reposts: number;
+  views: number;
+  date: Date;
 }
 
-export default defineComponent({
-  name: 'PostsPage',
-  components: {ElementPlus, Promotion, ChatDotSquare, Comment},
-  setup() {
-    const posts = ref<Post[]>([]);
-    const totalPosts = ref(0);
-    const currentPage = ref(1);
-    const pageSize = ref(5);
-    const mockPosts = [
-      {
-        id: 1,
-        authorName: 'Группы 1',
-        text: 'Это текст поста номер 1. Он содержит некоторую информацию...',
-        likes: 5,
-        comments: 3,
-        reposts: 2,
-      },
-      {
-        id: 2,
-        authorName: 'Группы 2',
-        text: 'Это текст поста номер 2. Он также содержит некоторую информацию...',
-        likes: 8,
-        comments: 4,
-        reposts: 1,
-      },
-      {
-        id: 1,
-        authorName: 'Группы 1',
-        text: 'Это текст поста номер 1. Он содержит некоторую информацию...',
-        likes: 5,
-        comments: 3,
-        reposts: 2,
-      },
-      {
-        id: 2,
-        authorName: 'Группы 2',
-        text: 'Это текст поста номер 2. Он также содержит некоторую информацию...',
-        likes: 8,
-        comments: 4,
-        reposts: 1,
-      },
-      {
-        id: 1,
-        authorName: 'Группы 1',
-        text: 'Это текст поста номер 1. Он содержит некоторую информацию...',
-        likes: 5,
-        comments: 3,
-        reposts: 2,
-      },
-      {
-        id: 2,
-        authorName: 'Группы 2',
-        text: 'Это текст поста номер 2. Он также содержит некоторую информацию...',
-        likes: 8,
-        comments: 4,
-        reposts: 1,
-      },
-      {
-        id: 1,
-        authorName: 'Группы 1',
-        text: 'Это текст поста номер 1. Он содержит некоторую информацию...',
-        likes: 5,
-        comments: 3,
-        reposts: 2,
-      },
-      {
-        id: 2,
-        authorName: 'Группы 2',
-        text: 'Это текст поста номер 2. Он также содержит некоторую информацию...',
-        likes: 8,
-        comments: 4,
-        reposts: 1,
-      },
-    ];
+const scrollContainer = ref<HTMLElement | null>(null);
+const posts = ref<Post[]>([]);
+const loading = ref(false);
+let page = 1;
+const pageSize = 10;
 
-    const mockFetchPosts = async (page: number, size: number) => {
-      try {
-        const start = (page - 1) * size;
-        const end = start + size;
-        const paginatedPosts = mockPosts.slice(start, end);
-        posts.value = paginatedPosts;
+// Метод для загрузки данных
+const loadPosts = async () => {
+  if (loading.value) return;
 
-        totalPosts.value = mockPosts.length;
-      } catch (error) {
-        console.error('Ошибка при получении постов:', error);
-      }
-    };
+  loading.value = true;
 
-    const fetchPosts = async (page: number, size: number) => {
-      try {
-        const response = await axios.get('https://localhost:5000/api/posts', {
-          params: {
-            page,
-            size,
-          },
-        });
-        posts.value = response.data.posts;
-        totalPosts.value = response.data.total;
-      } catch (error) {
-        console.error('Ошибка при получении постов:', error);
-      }
-    };
+  // Имитация запроса к серверу
+  const newPosts = await fetchPosts(page, pageSize);
 
-    const handlePageChange = (newPage: number) => {
-      currentPage.value = newPage;
-      mockFetchPosts(newPage, pageSize.value);
-    };
+  posts.value = [...posts.value, ...newPosts];
+  page += 1;
+  loading.value = false;
+};
 
-    onMounted(() => {
-      mockFetchPosts(currentPage.value, pageSize.value);
-    });
+// Имитация асинхронного запроса к серверу
+const fetchPosts = async (page: number, size: number) => {
+  const data = await httpGet(`/posts?limit=${size}&offset=${page*size}`, {});
+  posts.value = data.map((post) => ({
+    id: post.id,
+    groupName: post.groupName,
+    text: post.text,
+    likes: post.likes,
+    comments: 0,
+    shares: 0,
+    date: post.date,
+  }));
+};
 
-    return {
-      posts,
-      totalPosts,
-      currentPage,
-      pageSize,
-      handlePageChange,
-    };
-  },
+// Обработчик события прокрутки
+const handleScroll = () => {
+  const container = scrollContainer.value;
+  if (
+      container &&
+      container.scrollTop + container.clientHeight >= container.scrollHeight - 10 &&
+      !loading.value
+  ) {
+    loadPosts();
+  }
+};
+
+// Форматирование даты
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+};
+
+// Установка и удаление обработчиков событий
+onMounted(() => {
+  loadPosts(); // Загрузка первоначальных данных
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('scroll', handleScroll);
+  }
+});
+
+onUnmounted(() => {
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll);
+  }
 });
 </script>
 
 <style scoped>
-.post-card {
+.scroll-container {
+  height: 85vh;
   width: 100%;
-  border: 14px;
-  border-radius: 10px !important;
-}
-
-.post-stats {
+  overflow-y: auto;
   display: flex;
-  justify-content: space-around;
-  margin-top: 10px;
+  padding-right: 10px;
+  flex-direction: column;
 }
 
-.post-stats .el-button {
-  padding: 0;
+.post-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
 }
 
-.group-name {
-  font-size: 18px;
-  font-weight: bold
+.post-card h2 {
+  font-weight: bold;
+  margin: 0 0 10px;
 }
 
-.title {
-  color: black;
-  font-weight: bold !important;
-  font-size: 24px !important;
-  margin: 15px;
-  text-align: start
+.post-card p {
+  margin: 0 0 10px;
+  text-align: start;
+}
+
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.post-actions span {
+  margin-right: 15px;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 8px; /* Ширина скроллбара */
+  height: 8px; /* Высота скроллбара */
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: #a0a0a0; /* Цвет полосы прокрутки */
+  border-radius: 10px; /* Закругление углов */
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background-color: transparent; /* Прозрачный фон */
 }
 </style>
