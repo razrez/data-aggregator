@@ -31,7 +31,7 @@ public_domains = [
 ]
 
 urls_gen = (
-    f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={posts_offset}"
+    f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={posts_offset}&extended"
     for domain in public_domains
 )
 
@@ -55,12 +55,13 @@ def extract_data(data: dict):
         post_data["text"] = post["text"]
         post_data["likes"] = post["likes"]["count"]
         post_data["views"] = post["views"]["count"]
+        post_data['public_name'] = data["response"]["groups"][0]["name"]
         logging.info(f'extracted {idx + 1} post from {post_data["id"]}')
         yield post_data
 
 
 def put_key(key, value):
-    logging.info(f"Сохранение ключа {key} со значением {value} в Infinispan")
+    logging.debug(f"Сохранение ключа {key} со значением {value} в Infinispan")
     try:
         url = f"http://{infinispan_host}:{infinispan_port}/rest/v2/caches/{infinispan_cache_name}/{key}"
 
