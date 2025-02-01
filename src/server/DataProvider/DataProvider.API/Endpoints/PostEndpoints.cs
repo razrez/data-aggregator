@@ -26,7 +26,7 @@ public static class PostEndpoints
 
       // Если limit <= 0, сделаем concurrency = 1, чтобы не делить на ноль и не создавать SemaphoreSlim(0).
       var concurrency = (limit > 0) ? limit : 1;
-      var allPosts = await infinispanService.LoadAllPostsAsync(concurrency);
+      var allPosts = await infinispanService.LoadAllPostsAsync(keys, concurrency);
 
       return TypedResults.Ok(allPosts);
     })
