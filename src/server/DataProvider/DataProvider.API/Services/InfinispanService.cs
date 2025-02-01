@@ -10,7 +10,7 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
   private readonly InfinispanSettings _settings = options.Value;
 
   // Получение постов с псевдопагинацией
-  public async Task<List<string>> GetAllKeys(int offset, int limit)
+  public async Task<List<long>> GetAllKeys(int offset, int limit)
   {
     // Вместо ?start={start}&max={max}
     var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}?action=keys";
@@ -20,17 +20,17 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
     if (!response.IsSuccessStatusCode)
       return [];
 
-    var numericKeys = await response.Content.ReadFromJsonAsync<List<long>>();
-    var allKeys = numericKeys?.Select(x => x.ToString()).ToList() ?? new List<string>();
+    var stringKeys = await response.Content.ReadFromJsonAsync<List<string>>();
 
     // «Обрезаем» в коде
-    return allKeys
+    return stringKeys?
+      .Select(k => long.Parse(k))
       .Skip(offset) // «пропустить <offset> элементов в отсортированном списке»
       .Take(limit)
       .ToList() ?? [];
   }
 
-  public async Task<Post?> GetPostByKey(string key)
+  public async Task<Post?> GetPostByKey(long key)
   {
     var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}/{key}";
     var response = await _httpClient.GetAsync(url);
@@ -51,4 +51,12 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
     }
   }
 
+  public async Task PutPostByKey(long key, Post post)
+  {
+    var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}/{key}";
+    // Для Infinispan, если ключ не существует, POST vs PUT может отличаться, 
+    // но чаще PUT создаёт/заменяет.
+    
+    await _httpClient.PutAsJsonAsync(url, post).ConfigureAwait(false);
+  }
 }

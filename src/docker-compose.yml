@@ -15,6 +15,16 @@ services:
     # volumes:
     #   - ./infinispan_data:/opt/infinispan/server/data
 
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
   data-scrapper:
     container_name: data-scrapper
     build:
@@ -25,32 +35,34 @@ services:
     depends_on:
       - infinispan
     environment:
+      - VK_APP_ID=
+      - VK_ACCESS_TOKEN=
+      - VK_API_VERSION=5.81
+      - POSTS_COUNT=100
+      - POSTS_OFFSET=100
       - INFINISPAN_HOST=infinispan
       - INFINISPAN_PORT=11222
       - INFINISPAN_CACHE_NAME=cache-name
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
 
-      # - VK_ACCESS_TOKEN=
-      # - VK_API_VERSION=5.199
-      # - POSTS_COUNT=100
-      # - POSTS_OFFSET=100
-    # Можно добавить volume для кода/логов/настроек
 
   server:
     container_name: server
     build:
       context: ./server/
       dockerfile: DataProvider/DataProvider.API/Dockerfile
-    # Или:
-    # image: your-registry/server:latest
+    
     depends_on:
+      - postgres
       - infinispan
     environment:
       - INFINISPAN_HOST=infinispan
       - INFINISPAN_PORT=11222
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PostgresConnection="Host=postgres;Port=5432;Database=postsdb;Username=postgres;Password=postgres"
       # Другие нужные переменные окружения для ASP.NET
     ports:
       - "8080:80"

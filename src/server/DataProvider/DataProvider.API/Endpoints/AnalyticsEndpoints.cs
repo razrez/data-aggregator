@@ -1,7 +1,7 @@
-﻿using DataProvider.API.Helpers.Extensions;
-using DataProvider.API.Models;
+﻿using DataProvider.API.Models;
+using DataProvider.API.Persistence;
 using DataProvider.API.Services;
-using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataProvider.API.Endpoints;
 
@@ -14,8 +14,9 @@ public static class AnalyticsEndpoints
   {
     // 1) Получить все посты за указанный период
     // curl -X GET http://localhost:5163/api/analytics?startDate=2024-02-24&endDate=2024-02-28
-    routes.MapGet("/api/analytics", async (DateTime? startDate, DateTime? endDate, IInfinispanService infinispanService) =>
+    routes.MapGet("/api/analytics", async (DateTime? startDate, DateTime? endDate, IInfinispanService infinispanService, AppDbContext db) =>
     {
+
       // Если не заданы startDate/endDate, берём «дефолтные» (например, последний год)
       var sDate = startDate ?? DateTime.UtcNow.AddYears(-1);
       var eDate = endDate ?? DateTime.UtcNow;
@@ -42,23 +43,20 @@ public static class AnalyticsEndpoints
 
     // 2) Получить топ N постов по лайкам за период
     // curl -X GET http://localhost:5163/api/analytics/topLiked?startDate=2024-02-24&endDate=2024-03-24&count=10
-    routes.MapGet("/api/analytics/topLiked", async (DateTime? startDate, DateTime? endDate, int count, IInfinispanService infinispanService) =>
+    routes.MapGet("/api/analytics/topLiked", async (DateTime? startDate, DateTime? endDate, int count, AppDbContext db) =>
     {
       var sDate = startDate ?? DateTime.UtcNow.AddYears(-1);
       var eDate = endDate ?? DateTime.UtcNow;
       var topCount = (count <= 0) ? 10 : count;
 
-      var keys = await infinispanService.GetAllKeys();
-      var allPosts = await infinispanService.LoadAllPostsAsync(keys, concurrency: topCount);
+      var query = db.Posts
+          .Where(p => p.Date >= sDate && p.Date <= eDate)
+          .OrderByDescending(p => p.Likes)
+          .Take(topCount);
 
-      // Фильтруем по периоду и сортируем по лайкам
-      var topLiked = allPosts
-        .Where(p => p.Date >= sDate && p.Date <= eDate)
-        .OrderByDescending(p => p.Likes)
-        .Take(topCount)
-        .ToList();
+      var topLiked = await query.ToListAsync();
 
-      return Results.Ok(topLiked);
+      return TypedResults.Ok(topLiked);
     });
   }
 }

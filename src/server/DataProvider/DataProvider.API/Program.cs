@@ -8,8 +8,12 @@ using System.Text;
 using System.Text.Json.Serialization.Metadata;
 using DataProvider.API.Startup;
 using Microsoft.OpenApi.Models;
+using DataProvider.API.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddEndpointsApiExplorer();
 
 // Конфигурируем InfinispanSettings
 builder.Services
@@ -18,6 +22,12 @@ builder.Services
   {
     options.SerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
   });
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+  var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+  options.UseNpgsql(connString);
+});
 
 builder.Services
   .AddHttpClient<IInfinispanService, InfinispanService>()
@@ -64,7 +74,7 @@ builder.Services
             Id = "Bearer"
           }
         },
-        new string[] {}
+        Array.Empty<string>()
       }
     });
   });
@@ -81,7 +91,19 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAuth(builder.Configuration);
 
+// Фоновая служба читает из кеша и перекладывает все в Postgres
+builder.Services.AddHostedService<SyncPostsBackgroundService>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+  db.Database.EnsureCreated();
+  // Если таблиц нет — создаст через OnModelCreating,
+  // Если таблицы уже существуют — проверит их схему, 
+  // но вноcить изменения при несовпадении не будет.
+}
 
 // Подключаем Swagger
 if (app.Environment.IsDevelopment())

@@ -5,12 +5,9 @@ namespace DataProvider.API.Helpers.Extensions;
 
 public static class InfiniSpanServiceExtensions
 {
-  public static async Task<List<Post>> LoadAllPostsAsync(this IInfinispanService infinispanService, List<string> keys, int concurrency = 10)
+  public static async Task<List<Post>> LoadAllPostsAsync(this IInfinispanService infinispanService, List<long>? keys = null, int concurrency = 10)
   {
-    if (!keys.Any())
-    {
-      keys = await infinispanService.GetAllKeys();
-    }
+    if (keys.Count == 0) keys = await infinispanService.GetAllKeys();
 
     using var semaphore = new SemaphoreSlim(concurrency, concurrency);
     var tasks = new List<Task<Post?>>();
@@ -25,7 +22,7 @@ public static class InfiniSpanServiceExtensions
           return await infinispanService.GetPostByKey(key);
         }
         finally
-        {
+        { 
           semaphore.Release();
         }
       }));

@@ -11,7 +11,6 @@ public class Post
   [JsonPropertyName("public_name")]
   public string GroupName { get; set; }
 
-  // Через кастомный конвертер будет читаться/писаться как UnixTime
   [JsonConverter(typeof(UnixTimeToDateTimeConverter))]
   [JsonPropertyName("date")]
   public DateTime Date { get; set; }
