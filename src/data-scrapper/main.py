@@ -31,7 +31,7 @@ public_domains = [
 ]
 
 urls_gen = (
-    f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={posts_offset}&extended"
+    f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={posts_offset}&extended=1"
     for domain in public_domains
 )
 
