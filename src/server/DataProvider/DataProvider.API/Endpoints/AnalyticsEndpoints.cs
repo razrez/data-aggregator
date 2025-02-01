@@ -49,7 +49,7 @@ public static class AnalyticsEndpoints
       var topCount = (count <= 0) ? 10 : count;
 
       var keys = await infinispanService.GetAllKeys();
-      var allPosts = await infinispanService.LoadAllPostsAsync(concurrency: topCount);
+      var allPosts = await infinispanService.LoadAllPostsAsync(keys, concurrency: topCount);
 
       // Фильтруем по периоду и сортируем по лайкам
       var topLiked = allPosts
