@@ -1,4 +1,4 @@
-﻿using DataProvider.API.Models.Converters;
+﻿using DataProvider.API.Helpers.Converters;
 using System.Text.Json.Serialization;
 
 namespace DataProvider.API.Models;
@@ -8,7 +8,9 @@ public class Post
   [JsonPropertyName("id")]
   public int Id { get; set; }
 
-  [JsonConverter(typeof(UnixTimeToUniversalTimeConverter))]
+  // Через кастомный конвертер будет читаться/писаться как UnixTime
+  [JsonConverter(typeof(UnixTimeToDateTimeConverter))]
+  [JsonPropertyName("date")]
   public DateTime Date { get; set; }
 
   [JsonPropertyName("text")]

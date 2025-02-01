@@ -1,6 +1,4 @@
 ﻿
-using Microsoft.Extensions.Logging;
-
 namespace DataProvider.API.Middleware;
 
 public class RequestResponseLoggingMiddleWare(ILogger logger) : IMiddleware
@@ -12,11 +10,6 @@ public class RequestResponseLoggingMiddleWare(ILogger logger) : IMiddleware
   {
     HttpRequest httpRequest = context.Request;
     long reqIndex = Interlocked.Increment(ref _reqCount);
-
-    _logger.Log(
-        LogLevel.Information,
-        $"[{reqIndex}] --> **{httpRequest.Method}** __{httpRequest.Path}__"
-    );
 
     try
     {

@@ -1,4 +1,5 @@
-﻿using DataProvider.API.Models;
+﻿using DataProvider.API.Helpers.Extensions;
+using DataProvider.API.Models;
 using DataProvider.API.Services;
 
 namespace DataProvider.API.Endpoints;
@@ -10,35 +11,25 @@ public static class PostEndpoints
   /// </summary>
   public static void MapPostEndpoints(this IEndpointRouteBuilder routes)
   {
-    // 1) Получить пост по ключу
     routes.MapGet("/api/post/get/{key}", async (string key, IInfinispanService infinispan) =>
     {
       Post? post = await infinispan.GetPostByKey(key);
       return TypedResults.Json(post);
     })
-    .WithName("GetPostByKey");
+    .WithDescription("Получить пост по ключу");
 
-    // 2) Список последних N постов (сортировка по убыванию даты)
-    routes.MapGet("/api/post/list", async (int limit, IInfinispanService infinispan) =>
+    // Для получение новой страницы просто увеличиваем offset += limit
+    routes.MapGet("/api/posts", async (int offset, int limit, IInfinispanService infinispanService ) =>
     {
-      var keys = await infinispan.GetAllKeys();
-      var posts = new List<Post>();
+      // 1) Сначала получаем нужные ключи (offset/limit).
+      var keys = await infinispanService.GetAllKeys(offset, limit);
 
-      // Собираем посты
-      foreach (var key in keys)
-      {
-        var post = await infinispan.GetPostByKey(key);
-        if (post != null) posts.Add(post);
-      }
+      // Если limit <= 0, сделаем concurrency = 1, чтобы не делить на ноль и не создавать SemaphoreSlim(0).
+      var concurrency = (limit > 0) ? limit : 1;
+      var allPosts = await infinispanService.LoadAllPostsAsync(concurrency);
 
-      // Сортируем по убыванию даты и берем limit
-      posts = posts
-        .OrderByDescending(p => p.Date)
-        .Take(limit > 0 ? limit : 10)  // если limit не задан, возьмём 10
-        .ToList();
-
-      return TypedResults.Ok(posts);
+      return TypedResults.Ok(allPosts);
     })
-    .WithName("GetLastPosts");
+    .WithDescription("Получение постов с пагинацией");
   }
 }

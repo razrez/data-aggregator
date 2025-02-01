@@ -10,18 +10,24 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
   private readonly InfinispanSettings _settings = options.Value;
 
   // Получение постов с псевдопагинацией
-  public async Task<List<string>> GetAllKeys(int start = 0, int max = 999999)
+  public async Task<List<string>> GetAllKeys(int offset, int limit)
   {
-    var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}?start={start}&max={max}";
+    // Вместо ?start={start}&max={max}
+    var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}?action=keys";
+
     var response = await _httpClient.GetAsync(url);
 
     if (!response.IsSuccessStatusCode)
-      return new List<string>();
-    
-    var json = await response.Content.ReadAsStringAsync();
+      return [];
 
-    var keys = await response.Content.ReadFromJsonAsync<List<string>>();
-    return keys ?? new List<string>();
+    var numericKeys = await response.Content.ReadFromJsonAsync<List<long>>();
+    var allKeys = numericKeys?.Select(x => x.ToString()).ToList() ?? new List<string>();
+
+    // «Обрезаем» в коде
+    return allKeys
+      .Skip(offset) // «пропустить <offset> элементов в отсортированном списке»
+      .Take(limit)
+      .ToList() ?? [];
   }
 
   public async Task<Post?> GetPostByKey(string key)
@@ -29,8 +35,7 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
     var url = $"{_settings.Url}/rest/v2/caches/{_settings.CacheName}/{key}";
     var response = await _httpClient.GetAsync(url);
 
-    if (!response.IsSuccessStatusCode)
-      return null;
+    if (!response.IsSuccessStatusCode) return null;
 
     var json = await response.Content.ReadAsStringAsync();
     if (string.IsNullOrEmpty(json)) return null;

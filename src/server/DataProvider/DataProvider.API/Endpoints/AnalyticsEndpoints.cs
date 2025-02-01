@@ -1,4 +1,6 @@
-﻿using DataProvider.API.Services;
+﻿using DataProvider.API.Helpers.Extensions;
+using DataProvider.API.Models;
+using DataProvider.API.Services;
 using System.Text.RegularExpressions;
 
 namespace DataProvider.API.Endpoints;
@@ -10,39 +12,53 @@ public static class AnalyticsEndpoints
   /// </summary>
   public static void MapAnalyticsEndpoints(this IEndpointRouteBuilder routes)
   {
-    // GET: /api/analytics?startDate=2025-01-01&endDate=2025-01-31
+    // 1) Получить все посты за указанный период
+    // curl -X GET http://localhost:5163/api/analytics?startDate=2024-02-24&endDate=2024-02-28
     routes.MapGet("/api/analytics", async (DateTime? startDate, DateTime? endDate, IInfinispanService infinispanService) =>
     {
+      // Если не заданы startDate/endDate, берём «дефолтные» (например, последний год)
       var sDate = startDate ?? DateTime.UtcNow.AddYears(-1);
       var eDate = endDate ?? DateTime.UtcNow;
 
+      // Получаем все ключи
       var keys = await infinispanService.GetAllKeys();
-      var hashtagCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+      var allPosts = new List<Post>();
 
+      // Загружаем все посты (фильтрация ниже)
       foreach (var key in keys)
       {
         var post = await infinispanService.GetPostByKey(key);
-        if (post == null) continue;
-
-        if (post.Date >= sDate && post.Date <= eDate)
-        {
-          var matches = Regex.Matches(post.Text, @"\B#\w+");
-          foreach (Match match in matches)
-          {
-            var hashtag = match.Value;
-            if (!hashtagCounts.ContainsKey(hashtag))
-            {
-              hashtagCounts[hashtag] = 0;
-            }
-            hashtagCounts[hashtag]++;
-          }
-        }
+        if (post != null) allPosts.Add(post);
       }
 
-      return Results.Ok(hashtagCounts);
+      // Фильтруем по дате
+      var filteredPosts = allPosts
+        .Where(p => p.Date >= sDate && p.Date <= eDate)
+        .OrderByDescending(p => p.Date) // допустим, сортируем по дате убывания
+        .ToList();
 
-    })
-    .WithName("GetHashtagAnalytics");
-    //.WithOpenApi();
+      return Results.Ok(filteredPosts);
+    });
+
+    // 2) Получить топ N постов по лайкам за период
+    // curl -X GET http://localhost:5163/api/analytics/topLiked?startDate=2024-02-24&endDate=2024-03-24&count=10
+    routes.MapGet("/api/analytics/topLiked", async (DateTime? startDate, DateTime? endDate, int count, IInfinispanService infinispanService) =>
+    {
+      var sDate = startDate ?? DateTime.UtcNow.AddYears(-1);
+      var eDate = endDate ?? DateTime.UtcNow;
+      var topCount = (count <= 0) ? 10 : count;
+
+      var keys = await infinispanService.GetAllKeys();
+      var allPosts = await infinispanService.LoadAllPostsAsync(concurrency: topCount);
+
+      // Фильтруем по периоду и сортируем по лайкам
+      var topLiked = allPosts
+        .Where(p => p.Date >= sDate && p.Date <= eDate)
+        .OrderByDescending(p => p.Likes)
+        .Take(topCount)
+        .ToList();
+
+      return Results.Ok(topLiked);
+    });
   }
 }
