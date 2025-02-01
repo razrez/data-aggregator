@@ -18,25 +18,21 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { defineComponent, ref } from 'vue';
+import { setCookie} from "~/utils/cookies";
 
-export default defineComponent({
-  name: 'SignInPage',
-  setup() {
-    const username = ref('');
-    const password = ref('');
+const username = ref('');
+const password = ref('');
 
-    const handleLogin = () => {
-      //todo: авторизация
-    };
+const handleLogin = async () => {
+  const response = await httpPost('/auth/signin', { Username: username.value, Password: password.value });
+  setCookie('authToken', response.token, response.experationDate);
+  navigateTo("/");
+};
 
-    return {
-      username,
-      password,
-      handleLogin,
-    };
-  },
+definePageMeta({
+  layout: "auth"
 });
 </script>
 
