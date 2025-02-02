@@ -4,6 +4,8 @@ from os import getenv
 import requests
 import logging
 import json
+import schedule
+import time
 
 load_dotenv()
 
@@ -18,6 +20,7 @@ infinispan_port = getenv("INFINISPAN_PORT")
 infinispan_user = getenv("INFINISPAN_USER")
 infinispan_pass = getenv("INFINISPAN_PASS")
 infinispan_cache_name = getenv("INFINISPAN_CACHE_NAME")
+iteration = 0
 
 public_domains = [
     "vk",
@@ -29,11 +32,6 @@ public_domains = [
     "jumoreski",
     "horror_memoirs",
 ]
-
-urls_gen = (
-    f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={posts_offset}&extended=1"
-    for domain in public_domains
-)
 
 
 def make_request(url):
@@ -56,7 +54,7 @@ def extract_data(data: dict):
         post_data["likes"] = post["likes"]["count"]
         post_data["views"] = post["views"]["count"]
         post_data["public_name"] = data["response"]["groups"][0]["name"]
-        logging.info(f'extracted {idx + 1} post from {post_data["id"]}')
+        logging.info(f'Извлечён пост {idx + 1} с id {post_data["id"]}')
         yield post_data
 
 
@@ -69,11 +67,15 @@ def put_key(key, value):
             url,
             data=json.dumps(value),
             auth=(infinispan_user, infinispan_pass),
-            headers={"Content-Type": "application/json", "timeToLiveSeconds": "300"},
+            headers={
+                "Content-Type": "application/json",
+                # Заголовок для установки времени жизни (TTL) на 300 секунд
+                "timeToLiveSeconds": "300",
+            },
         )
 
         if response.status_code == 204:
-            logging.info(f"Ключ '{key}' успешно сохранен.")
+            logging.info(f"Ключ '{key}' успешно сохранён.")
         elif response.status_code == 409:
             logging.info(
                 f'Ключ "{key}" уже существует. Выполняется обновление значения.'
@@ -87,12 +89,11 @@ def put_key(key, value):
             )
 
             if response.status_code == 204:
-                logging.info(f"Ключ '{key}' успешно обновлен.")
+                logging.info(f"Ключ '{key}' успешно обновлён.")
             else:
                 logging.error(
                     f"Ошибка при обновлении ключа '{key}': {response.status_code}, {response.text}"
                 )
-
         else:
             logging.error(
                 f"Ошибка при сохранении ключа '{key}': {response.status_code}, {response.text}"
@@ -103,7 +104,6 @@ def put_key(key, value):
 
 def create_cache():
     logging.info(f"Создание кэша {infinispan_cache_name} в Infinispan")
-
     try:
         url = f"http://{infinispan_host}:{infinispan_port}/rest/v2/caches/{infinispan_cache_name}"
         response = requests.post(
@@ -125,16 +125,36 @@ def create_cache():
         exit()
 
 
-if __name__ == "__main__":
-    logging.info("Запуск скрипта...")
-    logging.info("Инициализация кэша...")
-    sleep(10)
+def job():
+    global iteration
 
-    create_cache()
+    urls_gen = (
+        f"https://api.vk.com/method/wall.get?domain={domain}&access_token={access_token}&v={vk_api_version}&count={posts_count}&offset={int(posts_offset)*iteration}&extended=1"
+        for domain in public_domains
+    )
+
     for url in urls_gen:
         data = make_request(url)
         for post_data in extract_data(data):
             put_key(post_data["id"], post_data)
+
         sleep(2)
 
-    logging.info("Успешное завершение")
+    iteration += 1
+    logging.info(f"Сбор данных завершён. {iteration}")
+
+
+if __name__ == "__main__":
+    logging.info("Запуск скрипта...")
+    logging.info("Инициализация кэша...")
+
+    sleep(10)
+    create_cache()
+
+    job()
+
+    schedule.every(5).minutes.do(job)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
