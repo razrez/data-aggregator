@@ -35,24 +35,18 @@ services:
     depends_on:
       - infinispan
     environment:
-      - VK_APP_ID=
-      - VK_ACCESS_TOKEN=
-      - VK_API_VERSION=5.81
-      - POSTS_COUNT=100
-      - POSTS_OFFSET=100
       - INFINISPAN_HOST=infinispan
       - INFINISPAN_PORT=11222
       - INFINISPAN_CACHE_NAME=cache-name
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
 
-
   server:
     container_name: server
     build:
       context: ./server/
       dockerfile: DataProvider/DataProvider.API/Dockerfile
-    
+
     depends_on:
       - postgres
       - infinispan
