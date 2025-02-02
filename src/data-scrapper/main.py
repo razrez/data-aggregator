@@ -55,7 +55,7 @@ def extract_data(data: dict):
         post_data["text"] = post["text"]
         post_data["likes"] = post["likes"]["count"]
         post_data["views"] = post["views"]["count"]
-        post_data['public_name'] = data["response"]["groups"][0]["name"]
+        post_data["public_name"] = data["response"]["groups"][0]["name"]
         logging.info(f'extracted {idx + 1} post from {post_data["id"]}')
         yield post_data
 
@@ -69,7 +69,7 @@ def put_key(key, value):
             url,
             data=json.dumps(value),
             auth=(infinispan_user, infinispan_pass),
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "timeToLiveSeconds": "300"},
         )
 
         if response.status_code == 204:
