@@ -20,11 +20,10 @@ public class InfinispanService(HttpClient httpClient, IOptions<InfinispanSetting
     if (!response.IsSuccessStatusCode)
       return [];
 
-    var stringKeys = await response.Content.ReadFromJsonAsync<List<string>>();
+    var stringKeys = await response.Content.ReadFromJsonAsync<List<long>>();
 
     // «Обрезаем» в коде
     return stringKeys?
-      .Select(k => long.Parse(k))
       .Skip(offset) // «пропустить <offset> элементов в отсортированном списке»
       .Take(limit)
       .ToList() ?? [];

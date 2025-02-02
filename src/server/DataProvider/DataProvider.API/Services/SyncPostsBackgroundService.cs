@@ -41,30 +41,26 @@ public class SyncPostsBackgroundService : BackgroundService
           if (existing == null)
           {
             // Новый пост
-            if (string.IsNullOrWhiteSpace(p.GroupName))
+            var entity = new PostEntity
             {
-              p.GroupName = "DefaultGroup";
+              Id = p.Id,
+              Date = p.Date, // UnixTime
+              Text = p.Text,
+              Likes = p.Likes,
+              Views = p.Views,
+              GroupName = p.GroupName,
+            };
+            await db.Posts.AddAsync(entity, stoppingToken).ConfigureAwait(false);
 
-              var entity = new PostEntity
-              {
-                Id = p.Id,
-                Date = p.Date, // UnixTime
-                Text = p.Text,
-                Likes = p.Likes,
-                Views = p.Views,
-                GroupName = p.GroupName,
-              };
-              await db.Posts.AddAsync(entity, stoppingToken).ConfigureAwait(false);
-            }
-            else
-            {
-              // Обновляем поля
-              existing.Text = p.Text;
-              existing.Date = p.Date;
-              existing.Likes = p.Likes;
-              existing.Views = p.Views;
-              existing.GroupName = p.GroupName;
-            }
+          }
+          else
+          {
+            // Обновляем поля
+            existing.Text = p.Text;
+            existing.Date = p.Date;
+            existing.Likes = p.Likes;
+            existing.Views = p.Views;
+            existing.GroupName = p.GroupName;
           }
 
           await db.SaveChangesAsync().ConfigureAwait(false);
@@ -76,7 +72,7 @@ public class SyncPostsBackgroundService : BackgroundService
       }
 
       // Ждём минуту перед следующим проходом
-      await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+      await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
     }
   }
 }
