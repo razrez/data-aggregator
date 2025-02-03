@@ -41,42 +41,42 @@ services:
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
 
-  server:
-    container_name: server
-    build:
-      context: ./server/
-      dockerfile: DataProvider/DataProvider.API/Dockerfile
+  # server:
+  #   container_name: server
+  #   build:
+  #     context: ./server/
+  #     dockerfile: DataProvider/DataProvider.API/Dockerfile
 
-    depends_on:
-      - postgres
-      - infinispan
-    environment:
-      - INFINISPAN_HOST=infinispan
-      - INFINISPAN_PORT=11222
-      - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
-      - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__PostgresConnection="Host=postgres;Port=5432;Database=postsdb;Username=postgres;Password=postgres"
-      # Другие нужные переменные окружения для ASP.NET
-    ports:
-      - "8080:80"
-    # volumes:
-    #   - ./server_logs:/app/logs
+  #   depends_on:
+  #     - postgres
+  #     - infinispan
+  #   environment:
+  #     - INFINISPAN_HOST=infinispan
+  #     - INFINISPAN_PORT=11222
+  #     - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
+  #     - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__PostgresConnection="Host=postgres;Port=5432;Database=postsdb;Username=postgres;Password=postgres"
+  #     # Другие нужные переменные окружения для ASP.NET
+  #   ports:
+  #     - "8080:80"
+  #   # volumes:
+  #   #   - ./server_logs:/app/logs
 
-  ui:
-    container_name: ui
-    build:
-      context: ./ui
-      dockerfile: Dockerfile
-    # Или:
-    # image: your-registry/ui:latest
-    depends_on:
-      - server
-    ports:
-      - "3000:3000"
-    # Если нужен env для API:
-    environment:
-      - REACT_APP_API_URL=http://localhost:8080
-      # или VUE_APP_API_URL, если проект на Vue
-    # volumes:
-    #   - ./ui_logs:/usr/src/app/logs
+  # ui:
+  #   container_name: ui
+  #   build:
+  #     context: ./ui
+  #     dockerfile: Dockerfile
+  #   # Или:
+  #   # image: your-registry/ui:latest
+  #   depends_on:
+  #     - server
+  #   ports:
+  #     - "3000:3000"
+  #   # Если нужен env для API:
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8080
+  #     # или VUE_APP_API_URL, если проект на Vue
+  #   # volumes:
+  #   #   - ./ui_logs:/usr/src/app/logs

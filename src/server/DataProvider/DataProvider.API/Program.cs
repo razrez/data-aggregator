@@ -27,7 +27,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
   var connString = builder.Configuration.GetConnectionString("DefaultConnection");
   options.UseNpgsql(connString);
+
+  // Указываем, что все DateTime поля должны использовать UTC
+  AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
 });
+
+
 
 builder.Services
   .AddHttpClient<IInfinispanService, InfinispanService>()

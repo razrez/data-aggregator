@@ -21,12 +21,16 @@ public class PostEntityConfiguration : IEntityTypeConfiguration<PostEntity>
     // Поле GroupName => group_name (varchar(200) условно)
     builder.Property(x => x.GroupName)
         .HasColumnName("group_name")
-        .HasMaxLength(200)
-        .IsRequired();
+        .HasMaxLength(200);
 
     // Поле Date
     builder.Property(x => x.Date)
         .HasColumnName("date")
+        .HasColumnType("timestamp with time zone")
+        .HasConversion(
+          v => DateTime.SpecifyKind(v, DateTimeKind.Utc), // При сохранении в БД
+          v => DateTime.SpecifyKind(v, DateTimeKind.Utc)  // При чтении из БД
+        )
         // Для PostgreSQL под капотом обычно будет TIMESTAMP (без временной зоны),
         // или TIMESTAMP WITH TIME ZONE, если в UseNpgsql(...) так настроено
         .IsRequired();

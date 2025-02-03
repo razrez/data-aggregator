@@ -30,8 +30,7 @@ public class SyncPostsBackgroundService : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // 2. Загружаем посты
-        var keys = await infinispanService.GetAllKeys();
-        var allPosts = await infinispanService.LoadAllPostsAsync(keys);
+        var allPosts = await infinispanService.LoadAllPostsAsync();
 
         // 3. Сохраняем в БД (PostEntity)
         foreach (var p in allPosts)
@@ -62,9 +61,10 @@ public class SyncPostsBackgroundService : BackgroundService
             existing.Views = p.Views;
             existing.GroupName = p.GroupName;
           }
-
-          await db.SaveChangesAsync().ConfigureAwait(false);
         }
+
+        await db.SaveChangesAsync().ConfigureAwait(false);
+        scope.Dispose();
       }
       catch (Exception ex)
       {
@@ -72,7 +72,7 @@ public class SyncPostsBackgroundService : BackgroundService
       }
 
       // Ждём минуту перед следующим проходом
-      await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+      await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
     }
   }
 }
