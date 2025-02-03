@@ -21,27 +21,18 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { defineComponent, ref } from 'vue';
 
-export default defineComponent({
-  name: 'SignUpPage',
-  setup() {
-    const name = ref('');
-    const username = ref('');
-    const password = ref('');
+const name = ref('');
+const username = ref('');
+const password = ref('');
 
-    const handleRegister = () => {
-      //todo: регистрация
-    };
+const handleRegister = () => {
+};
 
-    return {
-      name,
-      username,
-      password,
-      handleRegister,
-    };
-  },
+definePageMeta({
+  layout: "auth"
 });
 </script>
 

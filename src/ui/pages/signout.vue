@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const handleSignout = () => {
+  deleteCookie("authToken")
   navigateTo('signin')
 };
 

@@ -15,11 +15,13 @@ public static class PostEndpoints
   public static void MapPostEndpoints(this IEndpointRouteBuilder routes)
   {
     routes.MapGet("/api/post/", GetPostAsync)
-    .WithDescription("Получить пост (look-aside cache: сначала Infinispan, потом БД)");
+    .WithDescription("Получить пост (look-aside cache: сначала Infinispan, потом БД)")
+    .RequireAuthorization();
 
     // Для получение новой страницы просто увеличиваем offset += limit
     routes.MapGet("/api/posts", GetAllPostsAsync)
-    .WithDescription("Получение постов с пагинацией");
+    .WithDescription("Получение постов с пагинацией")
+    .RequireAuthorization();
   }
 
   public async static Task<IResult> GetPostAsync(

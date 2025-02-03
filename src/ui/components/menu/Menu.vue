@@ -21,7 +21,12 @@ const onClick = (route: string) => {
 <style scoped>
 .menu {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 5px;
+  padding: 5px 5px;
   align-items: start;
+  background-color: white;
+  border-radius: 12px;
+  margin-bottom: 15px;
 }
 </style>

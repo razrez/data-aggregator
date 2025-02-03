@@ -2,30 +2,28 @@
   <div>
     <el-container>
       <el-header class="header-container">
-        <el-row>
-          <el-col :span="4">
+        <div class="row">
+          <div class="left-column">
             <NuxtLink class="link" to="/">
               <div class="logo">
                 <el-image :src="'/vk-logo.svg'" fit="fill" style="width: 30px; height: 30px"></el-image>
                 VK Analyzer
               </div>
             </NuxtLink>
-          </el-col>
-          <el-col :span="16">
+          </div>
+          <div class="right-column">
             <div class="user-name">{{username}}</div>
-          </el-col>
-        </el-row>
+          </div>
+        </div>
       </el-header>
-      <el-container class="main-container">
-        <el-row>
-          <el-col :span="4">
+      <div class="main-container">
+          <div class="left-column">
               <Menu />
-          </el-col>
-          <el-col :span="16">
+          </div>
+          <div class="right-column">
               <slot/>
-          </el-col>
-        </el-row>
-      </el-container>
+          </div>
+      </div>
     </el-container>
   </div>
 </template>
@@ -76,5 +74,19 @@ onMounted(async () => {
 
 .main-container {
   padding: 20px 20%;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.left-column {
+  flex: 1
+}
+
+.right-column {
+  flex: 4
 }
 </style>
