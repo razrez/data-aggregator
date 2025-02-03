@@ -69,8 +69,8 @@ def put_key(key, value):
             auth=(infinispan_user, infinispan_pass),
             headers={
                 "Content-Type": "application/json",
-                # Заголовок для установки времени жизни (TTL) на 300 секунд
-                "timeToLiveSeconds": "300",
+                # Заголовок для установки времени жизни (TTL) на 600 секунд
+                "timeToLiveSeconds": "600",
             },
         )
 

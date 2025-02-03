@@ -25,7 +25,7 @@ public class SyncPostsBackgroundService : BackgroundService
 
       try
       {
-        using var scope = _serviceProvider.CreateScope();
+        using var scope = _serviceProvider.CreateAsyncScope();
         var infinispanService = scope.ServiceProvider.GetRequiredService<IInfinispanService>();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -63,7 +63,7 @@ public class SyncPostsBackgroundService : BackgroundService
           }
         }
 
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await db.SaveChangesAsync();
         scope.Dispose();
       }
       catch (Exception ex)
@@ -72,7 +72,7 @@ public class SyncPostsBackgroundService : BackgroundService
       }
 
       // Ждём минуту перед следующим проходом
-      await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
+      await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
     }
   }
 }

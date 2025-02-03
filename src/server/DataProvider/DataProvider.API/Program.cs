@@ -32,8 +32,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
   AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
 });
 
-
-
 builder.Services
   .AddHttpClient<IInfinispanService, InfinispanService>()
   .ConfigureHttpClient((provider, client) =>
@@ -111,14 +109,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Подключаем Swagger
-if (app.Environment.IsDevelopment())
-{
-  app.UseSwagger();
-  app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuth();
-
 // 5) Маппим наши эндпоинты
 app.MapPostEndpoints();
 app.MapAnalyticsEndpoints();

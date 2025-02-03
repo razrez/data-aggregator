@@ -41,27 +41,27 @@ services:
       - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
       - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
 
-  # server:
-  #   container_name: server
-  #   build:
-  #     context: ./server/
-  #     dockerfile: DataProvider/DataProvider.API/Dockerfile
+  server:
+    container_name: server
+    build:
+      context: ./server/DataProvider
+      dockerfile: ./DataProvider.API/Dockerfile
 
-  #   depends_on:
-  #     - postgres
-  #     - infinispan
-  #   environment:
-  #     - INFINISPAN_HOST=infinispan
-  #     - INFINISPAN_PORT=11222
-  #     - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
-  #     - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ConnectionStrings__PostgresConnection="Host=postgres;Port=5432;Database=postsdb;Username=postgres;Password=postgres"
-  #     # Другие нужные переменные окружения для ASP.NET
-  #   ports:
-  #     - "8080:80"
-  #   # volumes:
-  #   #   - ./server_logs:/app/logs
+    depends_on:
+      - postgres
+      - infinispan
+    environment:
+      - INFINISPAN_HOST=infinispan
+      - INFINISPAN_PORT=11222
+      - INFINISPAN_USER=${INFINISPAN_USER:-infinispan}
+      - INFINISPAN_PASS=${INFINISPAN_PASS:-secret}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PostgresConnection="Host=postgres;Port=5432;Database=postsdb;Username=postgres;Password=postgres"
+      # Другие нужные переменные окружения для ASP.NET
+    ports:
+      - "5163:8080"
+    # volumes:
+    #   - ./server_logs:/app/logs
 
   # ui:
   #   container_name: ui
