@@ -15,11 +15,13 @@ public static class AnalyticsEndpoints
   {
     // curl -X GET "http://localhost:5163/api/analytics?startDate=2025-01-01T00:00:00Z&endDate=2025-01-04T00:00:00Z" \ -H "Accept: application/json"
     routes.MapGet("/api/analytics", GetTimeFilteredPosts)
+      .RequireAuthorization()
       .WithDescription("Получить все посты за указанный период");
 
     // curl -X GET "http://localhost:5163/api/analytics/topLiked?startDate=2025-01-01T00:00:00Z&endDate=2025-01-14T00:00:00Z&count=5&sortBy=views" \ -H "Accept: application/json"
     // curl -X GET "http://localhost:5163/api/analytics/topPosts?startDate=2025-01-01T00:00:00Z&endDate=2025-01-31T23:59:59Z&count=10&sortBy=likes" \ -H "Accept: application/json"
     routes.MapGet("/api/analytics/topLiked", GetTopPosts)
+      .RequireAuthorization()
       .WithDescription("Получить топ N постов по likes/views за период");
   }
 

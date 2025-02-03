@@ -1,14 +1,14 @@
 <template>
   <div ref="scrollContainer" class="scroll-container">
     <el-row :gutter="20">
-      <el-col :span="24" v-for="post in posts" :key="post.id" style="margin-bottom: 20px;">
+      <el-col :span="24" style="margin-bottom: 20px;">
         <el-card v-for="post in posts" :key="post.id" class="post-card">
-          <h2>{{ post.groupName }}</h2>
+          <h2>{{ post.public_name }}</h2>
           <p>{{ post.text }}</p>
           <div class="post-footer">
             <div class="post-actions">
               <span><el-icon><ElementPlus /></el-icon> {{ post.likes }}</span>
-              <span><el-icon><ChatDotSquare /></el-icon> {{ post.views }}</span>
+              <span><el-icon><View /></el-icon> {{ post.views }}</span>
             </div>
             <div class="post-date">{{ formatDate(post.date) }}</div>
           </div>
@@ -22,15 +22,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ElCard } from 'element-plus';
 import {httpGet} from "~/utils/api";
-
-interface Post {
-  id: number;
-  groupName: string;
-  text: string;
-  likes: number;
-  views: number;
-  date: Date;
-}
+import type {Post} from "~/models/Post";
+import {formatDate} from "../utils/date";
 
 const scrollContainer = ref<HTMLElement | null>(null);
 const posts = ref<Post[]>([]);
@@ -38,13 +31,11 @@ const loading = ref(false);
 let page = 1;
 const pageSize = 10;
 
-// Метод для загрузки данных
 const loadPosts = async () => {
   if (loading.value) return;
 
   loading.value = true;
 
-  // Имитация запроса к серверу
   const newPosts = await fetchPosts(page, pageSize);
 
   posts.value = [...posts.value, ...newPosts];
@@ -54,15 +45,14 @@ const loadPosts = async () => {
 
 // Имитация асинхронного запроса к серверу
 const fetchPosts = async (page: number, size: number) => {
-  const data = await httpGet(`/posts?limit=${size}&offset=${page*size}`, {});
-  posts.value = data.map((post) => ({
+  const data = await httpGet(`/posts?limit=${size}&offset=${page*size - size}`, {});
+  return data.map((post) => ({
     id: post.id,
-    groupName: post.groupName,
+    public_name: post.public_name,
     text: post.text,
     likes: post.likes,
-    comments: 0,
-    shares: 0,
-    date: post.date,
+    views: post.views,
+    date: new Date(post.date * 1000),
   }));
 };
 
@@ -76,15 +66,6 @@ const handleScroll = () => {
   ) {
     loadPosts();
   }
-};
-
-// Форматирование даты
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date);
 };
 
 // Установка и удаление обработчиков событий
